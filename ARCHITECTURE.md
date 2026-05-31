@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.82 &nbsp;|&nbsp; **Tests:** 416 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17: validated on a real prior strategy)
+**Version:** 0.83 &nbsp;|&nbsp; **Tests:** 417 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17: validated on a prior strategy; R18: first risk-premium strategy)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -641,6 +641,21 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   evidence audit passed, escalated to the human), and the attribution (R15) explains WHY: residual fraction
   0.95 — the PnL is unexplained idiosyncratic residual, not the structural slope/curvature the thesis claims.
   Demo `apps/examples/factor_rv_replay.q`. Not tuned — a confirmed no-edge verdict is the system working.
+* **R18 — Post-foundation: a commodity carry strategy on crude, run end-to-end. ✅ DONE (v0.83).** The
+  first strategy with a genuine RISK-PREMIUM thesis (the term-structure / roll-yield premium R14's carry
+  signal was built for). New `crudeCarry` template (`templates/crude_carry.q`, `.template.crudeCarry.*`):
+  LONG crude when R14's `carrySignal` > +threshold (backwardation), SHORT in contango, FLAT in the dead-band,
+  smoothed over `lookback` with a minimum `holdingPeriod`; trades the ACTUAL contract R11's `.roll.active`
+  names, books NET PnL via `.exec.fill`, emits an R12-shape run record; its own carry-PERSISTENCE gate
+  (reuse R6's AR(1), inverted: persistent iff `ar1 ≥ minPersistence`) bites on a noise signal. PRE-REGISTERED
+  params (NOT tuned). Registered (`template` kind, conforms); carded (`card_crudeCarry`, edge `riskPremium`,
+  risk memory `energyShock2022`). R14 / R16's template / `.workflow.runReplay` / `gov/` byte-for-byte
+  UNCHANGED. On real CRUDE the verdict is HONEST + not tradeable (backwardation/flat reject at cost; contango
+  deflated to research, DSR 0.54; anyTradeable=0; the regime skeptic attaches the 2022 energy-shock crash
+  memory), and the attribution (R15) is the real test: carry +0.69 (it harvests SOME carry) but residual
+  fraction 0.98 — the PnL is directional residual, NOT a clean carry harvest (the red flag the premium
+  demands you check). Demo `apps/examples/crude_carry.q`. (Cross-sectional crude-vs-gas carry is the natural
+  follow-on — not built here.)
 * **← NEXT (post-foundation):** the deferred strategies + pricing extensions below, all riding on a stack
   that is realistic end-to-end — added only when a named edge or a real need justifies them.
 

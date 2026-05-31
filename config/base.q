@@ -159,6 +159,17 @@
 .cfg.strategy.seasonalCalSpread:`deferredIdx`minObs`entryThreshold`maxHold`txnCostRate`notional`maxAr1`rollBuffer!(
     2;3;1.5;20;0.0005;1f;0.98;5);
 
+/ --- crudeCarry (Post-foundation R18): the commodity term-structure / roll-yield RISK-PREMIUM strategy.
+/ PRE-REGISTERED params, FIXED + round (a-priori, NOT swept - carry is one of the easiest premia to overfit):
+/ threshold = the carry-signal dead-band (annualised; LONG when smoothed carrySignal > +threshold,
+/ SHORT < -threshold, FLAT in between); lookback = the causal smoothing window for the carry signal;
+/ holdingPeriod = the minimum days a position is held before it may flip (cuts roll turnover); the traded
+/ contract is R11's .roll.active (days_before_expiry for CRUDE) - no separate buffer needed here;
+/ txnCostRate = the per-trade proportional cost (same as the other strategies); notional = the position size;
+/ minPersistence = the carry-PERSISTENCE gate bar (AR(1) of the carry signal; a noise signal is not harvestable).
+.cfg.strategy.crudeCarry:`threshold`lookback`holdingPeriod`txnCostRate`notional`minPersistence!(
+    0.01;10;10;0.0005;1f;0.5);
+
 / --- factor layer: curve PCA (factor/factor.q), Research OS R8 ---
 / k = number of principal components (level/slope/curvature); tol/maxIter pin the deterministic
 / power iteration; nMaturities = the first-M tenor-ranked contracts forming the curve panel;
@@ -346,6 +357,16 @@
     "the spread mean-reverts to its seasonal norm (a stationarity gate bites if not); the seasonal pattern is causal (same-calendar-month up to asOf, R14); the parameters are PRE-REGISTERED in .cfg.strategy.seasonalCalSpread, NOT optimised to the gates";
     `structural;
     "crude in a stable seasonal-spread regime; breaks down in a structural dislocation (storage saturation / supply shock) where the spread stops mean-reverting";
+    `energyShock2022;`;"qFDM research";2026.05.31);
+/ Post-foundation R18: the crudeCarry template - the first RISK-PREMIUM strategy (term-structure /
+/ roll-yield premium). Carded WITH a populated failure-mode field (the crash/regime-shift risk the
+/ premium demands) so it is gateable via .cards.gatedRun / .workflow.runReplay.
+.cfg.cards:.cfg.cards upsert `cardId`capabilityKind`capabilityName`version`intendedUse`assumptions`edgeSource`regimeApplicability`riskMemoryKey`govHypoId`owner`asOf!(
+    `card_crudeCarry;`template;`crudeCarry;`v1;
+    "Time-series carry: LONG crude when the curve is backwardated / positive net carry (R14's carrySignal > +threshold), SHORT/FLAT in contango; trade the actual front contract (R11/R10); harvest the term-structure / roll-yield premium";
+    "the carry signal is PERSISTENT enough to harvest (a carry-persistence gate bites if not); R14's carrySignal is causal (point-in-time curve through R9's door); the parameters are PRE-REGISTERED in .cfg.strategy.crudeCarry, NOT optimised to the gates";
+    `riskPremium;
+    "crude in a persistent term-structure regime; the premium REVERSES VIOLENTLY in a regime shift / supply shock ('pennies in front of a steamroller' - small-and-steady then a large loss), so the edge is tail-risky; the convenience-yield / cost-of-carry side depends on R14's ASSUMED r+storage (not market-observed); near-roll liquidity matters (carry lives or dies on roll cost)";
     `energyShock2022;`;"qFDM research";2026.05.31);
 
 / --- backtest layer: per-strategy default configs (backtest/strategy.q) ---
