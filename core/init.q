@@ -144,6 +144,9 @@
 / Commodity carry template (Post-foundation R18: the term-structure / roll-yield RISK-PREMIUM strategy on
 / R14's carry signal; trades the actual front contract R11 names; emits an R12-shape run record)
 \l templates/crude_carry.q
+/ Cross-commodity carry template (Post-foundation R19: market-neutral crude-vs-gas relative carry; combines
+/ two R12-shape legs into one record; reuses R18's helpers + the R13/R15 cores via additive `legs branches)
+\l templates/xcommodity_carry.q
 / Evidence audit (Research OS R13: the deterministic pass/fail verifier on a replay run record +
 / the fail-safe precondition wrapper; ABOVE backtest/, BELOW gov/; reads the zone CONFIG not gov's
 / logic; gov UNMODIFIED; opens nothing at import)
@@ -162,4 +165,4 @@
 \l workflow/workflow.q
 
 .qfdm.loaded:1b;
-.qfdm.version:"0.83";
+.qfdm.version:"0.84";

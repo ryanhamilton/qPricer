@@ -170,6 +170,19 @@
 .cfg.strategy.crudeCarry:`threshold`lookback`holdingPeriod`txnCostRate`notional`minPersistence!(
     0.01;10;10;0.0005;1f;0.5);
 
+/ --- xCommodityCarry (Post-foundation R19): market-neutral CROSS-commodity carry (crude vs gas). The direct
+/ response to R18's finding (time-series crude carry was 98% directional residual): strip the common energy
+/ beta with a DOLLAR-NEUTRAL long/short so the relative carry premium stands on its own. PRE-REGISTERED params
+/ (FIXED, round, a-priori, NOT swept): commodities = the two legs (the higher-carry one is LONGed, the lower
+/ SHORTed); dispersionThreshold = the annualised carry GAP the two legs must differ by to trade (else flat);
+/ lookback = the causal smoothing window for the relative-carry (dispersion) signal; holdingPeriod = the
+/ minimum days a position is held before it may flip; txnCostRate / notional as elsewhere (notional is the
+/ per-leg dollar size - equal-and-opposite = dollar-neutral); minPersistence = the dispersion-persistence
+/ gate bar (AR(1)); minActiveFrac = the minimum fraction of dates the dispersion must exceed the threshold
+/ (a FLAT relative-carry signal that never disperses is not harvestable -> the gate bites).
+.cfg.strategy.xCommodityCarry:`commodities`dispersionThreshold`lookback`holdingPeriod`txnCostRate`notional`minPersistence`minActiveFrac!(
+    `CRUDE`GAS;0.05;10;10;0.0005;1f;0.5;0.05);
+
 / --- factor layer: curve PCA (factor/factor.q), Research OS R8 ---
 / k = number of principal components (level/slope/curvature); tol/maxIter pin the deterministic
 / power iteration; nMaturities = the first-M tenor-ranked contracts forming the curve panel;
@@ -367,6 +380,16 @@
     "the carry signal is PERSISTENT enough to harvest (a carry-persistence gate bites if not); R14's carrySignal is causal (point-in-time curve through R9's door); the parameters are PRE-REGISTERED in .cfg.strategy.crudeCarry, NOT optimised to the gates";
     `riskPremium;
     "crude in a persistent term-structure regime; the premium REVERSES VIOLENTLY in a regime shift / supply shock ('pennies in front of a steamroller' - small-and-steady then a large loss), so the edge is tail-risky; the convenience-yield / cost-of-carry side depends on R14's ASSUMED r+storage (not market-observed); near-roll liquidity matters (carry lives or dies on roll cost)";
+    `energyShock2022;`;"qFDM research";2026.05.31);
+/ Post-foundation R19: the xCommodityCarry template - market-neutral CROSS-commodity carry (crude vs gas).
+/ Carded WITH a populated failure-mode field (the relationship can break; only two assets = a thin
+/ cross-section) so it is gateable via .cards.gatedRun / .workflow.runReplay.
+.cfg.cards:.cfg.cards upsert `cardId`capabilityKind`capabilityName`version`intendedUse`assumptions`edgeSource`regimeApplicability`riskMemoryKey`govHypoId`owner`asOf!(
+    `card_xCommodityCarry;`template;`xCommodityCarry;`v1;
+    "Market-neutral cross-commodity carry: LONG the commodity (crude/gas) with the higher carry signal (more backwardated), SHORT the lower (more contango), dollar-neutral on the actual contracts of both legs (R11/R10); harvest the RELATIVE term-structure / roll-yield premium with the common energy beta removed";
+    "a dollar-neutral long/short removes the COMMON energy move to first order, so the residual PnL is the RELATIVE carry premium; both carry signals are causal (R14, through R9's door); the parameters are PRE-REGISTERED in .cfg.strategy.xCommodityCarry, NOT optimised to the gates";
+    `riskPremium;
+    "crude & gas in a stable relative term-structure regime; the crude-gas carry RELATIONSHIP can break (a gas-specific shock - dollar-neutrality hedges the COMMON move, not a relative one); only TWO assets = a thin / noisy cross-section; the cost-of-carry side depends on R14's ASSUMED r+storage; TWO-LEG liquidity / roll cost (the cost gate is more demanding - both legs pay)";
     `energyShock2022;`;"qFDM research";2026.05.31);
 
 / --- backtest layer: per-strategy default configs (backtest/strategy.q) ---

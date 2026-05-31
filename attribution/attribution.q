@@ -90,6 +90,7 @@
 / Decompose a replay run's realized PnL into level/slope/curvature/carry/residual (+ the residual
 / fraction). The five reconcile to the run's realized total by construction (residual is the plug).
 .attribution.pnl:{[run]
+    if[`legs in key run; :.attribution.__pnlCombined run];   / ADDITIVE: two-leg / multi-commodity record (R19)
     steps:run`steps; comm:(run`meta)`commodity;
     n:count steps;
     if[0=n; '"attribution.pnl: empty run record"];
@@ -105,6 +106,21 @@
         sum lev; sum slo; sum cur; sum car; sum resid; total;
         $[0f=abs total; 0n; (abs sum resid)%abs total];
         (.cfg.attribution`reconcileTol)>abs total-(sum lev)+(sum slo)+(sum cur)+(sum car)+sum resid)
+ };
+
+/ ADDITIVE two-leg / multi-commodity attribution (R19): a cross-commodity run record carries `legs (one
+/ single-commodity R12 record per leg). Attribute EACH leg with the UNCHANGED single-commodity .attribution.pnl
+/ (its own as-of curve via .curve.build), then SUM the components and reconcile to the combined total - the
+/ combined level/slope/curvature/carry/residual are the leg sums, and they reconcile by construction (each
+/ leg reconciles, sums of reconciling parts reconcile). The single-commodity path above is untouched.
+.attribution.__pnlCombined:{[run]
+    a:.attribution.pnl each run`legs;
+    lev:sum a@\:`level; slo:sum a@\:`slope; cur:sum a@\:`curvature; car:sum a@\:`carry; res:sum a@\:`residual;
+    total:sum a@\:`total;
+    `level`slope`curvature`carry`residual`total`residualFraction`reconciled!(
+        lev; slo; cur; car; res; total;
+        $[0f=abs total; 0n; (abs res)%abs total];
+        (.cfg.attribution`reconcileTol)>abs total-(lev+slo+cur+car+res))
  };
 
 / ── bucketed curve risk (.attribution.risk) ──────────────────────────────────

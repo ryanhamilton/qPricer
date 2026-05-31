@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.83 &nbsp;|&nbsp; **Tests:** 417 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17: validated on a prior strategy; R18: first risk-premium strategy)
+**Version:** 0.84 &nbsp;|&nbsp; **Tests:** 418 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17: validated on a prior strategy; R18: first risk-premium strategy; R19: first iterative / multi-leg result)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -656,8 +656,26 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   fraction 0.98 — the PnL is directional residual, NOT a clean carry harvest (the red flag the premium
   demands you check). Demo `apps/examples/crude_carry.q`. (Cross-sectional crude-vs-gas carry is the natural
   follow-on — not built here.)
-* **← NEXT (post-foundation):** the deferred strategies + pricing extensions below, all riding on a stack
-  that is realistic end-to-end — added only when a named edge or a real need justifies them.
+* **R19 — Post-foundation: market-neutral cross-commodity carry (crude vs gas). ✅ DONE (v0.84).** The first
+  ITERATIVE research output (R18's attribution diagnosed the carry harvest was 98% directional residual; R19
+  is the experiment that diagnosis demanded) and the first multi-leg / cross-commodity capability. New
+  `xCommodityCarry` template (`templates/xcommodity_carry.q`, `.template.xCommodityCarry.*`): LONG the
+  more-backwardated of crude/gas, SHORT the more-contango, dollar-neutral on the actual contracts of both
+  legs (R11), so the common energy beta is removed and the relative carry premium stands on its own; its own
+  dispersion/persistence gate bites. **Cores frozen, multi-leg by composition:** R12's single-commodity
+  replay is NOT changed — a per-leg R12-shape replay runs twice (reusing R18's helpers) and the two records
+  are COMBINED into one `legs`-bearing market-neutral record; `evidence/` and `attribution/` gained ADDITIVE
+  `legs`-aware branches (audit each leg + verify combined ties; attribute each leg + sum + reconcile) with
+  the single-commodity path byte-identical. PRE-REGISTERED params (NOT tuned). Registered (`template` kind,
+  conforms); carded (`card_xCommodityCarry`, edge `riskPremium`, risk memory `energyShock2022`). R14 / R16's
+  + R18's templates / `.workflow.runReplay` / `gov/` / the R12 core byte-for-byte UNCHANGED. On real CRUDE+GAS
+  the verdict is HONEST + not tradeable (all buckets reject at the demanding two-leg cost gate; anyTradeable=0;
+  the 2022 energy-shock crash memory attached), and the attribution ANSWERS R18: residual fraction 0.98 → 0.38
+  and carry +0.69 → +2.62 with the beta stripped — the relative premium is real (a large negative level term
+  shows equal-notional ≠ equal-risk; vol-weighting is the next iteration). Demo `apps/examples/xcommodity_carry.q`.
+* **← NEXT (post-foundation):** the deferred strategies + pricing extensions below (e.g. vol-weighted /
+  cross-sectional carry, the natural next iteration on R19), all riding on a stack that is realistic
+  end-to-end — added only when a named edge or a real need justifies them.
 
 **Deferred (unchanged):** the "priced-in" gate; the drift monitor; IPC services and cloud CI / scheduled
 pipeline (§6, §7); pricing extensions (commodity swaps, Asian / spread options — §9 of the external

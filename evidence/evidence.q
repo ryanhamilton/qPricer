@@ -44,6 +44,7 @@
 / deterministic, no RNG. `checks is a dict checkName->boolean; ANY false -> pass=0b with the reason
 / naming the failed checks. `run is an R12 replay run record (`meta`steps`rollEvents`provenance).
 .evidence.audit:{[run]
+    if[`legs in key run; :.evidence.__auditCombined run];    / ADDITIVE: two-leg / multi-commodity record (R19)
     cfg:.cfg.evidence;
     tol:cfg`reconcileTol;
     steps:run`steps;
@@ -96,6 +97,29 @@
     pass:all value checks;
     reason:$[pass; "all evidence checks passed";
         "evidence FAILED: ",", " sv string (key checks) where not value checks];
+    `pass`checks`reason!(pass;checks;reason)
+ };
+
+/ ADDITIVE two-leg / multi-commodity audit (R19): a market-neutral cross-commodity run record carries
+/ `legs (a list of single-commodity R12 records, one per leg). REUSE the UNCHANGED single-commodity
+/ .evidence.audit on EACH leg (per-leg lookAhead / universe / rollRespected / costs / fills / bookTies /
+/ pnlTies / containment), THEN verify the COMBINED book/PnL ties: the combined steps' stepPnl is exactly
+/ the sum of the legs' stepPnl per date (no leg dropped / double-counted), and the combined cumPnl ties to
+/ its own running sum. Pure; the single-commodity path above is untouched (a one-leg run has no `legs key).
+.evidence.__auditCombined:{[run]
+    tol:(.cfg.evidence)`reconcileTol;
+    legs:run`legs;
+    legAudits:.evidence.audit each legs;
+    legsClean:all legAudits@\:`pass;
+    cs:run`steps;
+    legStepPnls:sum {x[`steps]`stepPnl} each legs;           / per-date sum of the legs' realised stepPnl
+    combinedPnlTies:(count[cs]=count legStepPnls) and tol>max abs (cs`stepPnl)-legStepPnls;
+    combinedBookTies:tol>max abs (cs`cumPnl)-sums cs`stepPnl;
+    checks:`legsClean`combinedPnlTies`combinedBookTies!(legsClean;combinedPnlTies;combinedBookTies);
+    pass:all value checks;
+    reason:$[pass; "all evidence checks passed (",(string count legs)," legs + combined ties)";
+        legsClean; "evidence FAILED (combined): ",", " sv string (key checks) where not value checks;
+        "evidence FAILED (a leg): ",("; " sv (legAudits where not legAudits@\:`pass)@\:`reason)];
     `pass`checks`reason!(pass;checks;reason)
  };
 
