@@ -4,6 +4,8 @@ A kdb+/q pricing, calibration, risk, and backtest framework. The equity finite-d
 
 > **Commodity narrative:** the equity FDM is the correctness-validation case; the project's target is commodity. See **[docs/COMMODITY_DESK.md](docs/COMMODITY_DESK.md)** for the end-to-end story (WTI curve → two-factor calibration → Kalman state-space estimation → the 2020-2021 convenience-yield regimes) told with real numbers.
 
+> **Research findings (R25):** the post-foundation strategy search (R8 + R16–R24) is synthesised in **[docs/RESEARCH_FINDINGS.md](docs/RESEARCH_FINDINGS.md)** — a per-strategy ledger, the cross-cutting conclusion (**no cleanly tradeable edge from this data** across risk-premium / structural / directional; the only paying dimension is passive beta, which timing does not improve — R24 alpha −50.95), and a data-gap analysis naming what data each deferred strategy needs. Every figure is cross-checked against the committed evidence.
+
 ## Architecture
 
 The repository is one monorepo organized into layers (dependencies flow downward only); see **[ARCHITECTURE.md](ARCHITECTURE.md)** and the per-layer `README.md`:

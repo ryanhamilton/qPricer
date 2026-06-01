@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.89 &nbsp;|&nbsp; **Tests:** 421 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature; R21 vol-weighted carry; R22 local-basis attribution; R23 attribution units/roll fix + re-attribution; R24 directional trend + passive-long benchmark — the strategy line concluded: no tradeable edge in any dimension on this data)
+**Version:** 0.90 &nbsp;|&nbsp; **Tests:** 421 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature; R21 vol-weighted carry; R22 local-basis attribution; R23 attribution units/roll fix + re-attribution; R24 directional trend + passive-long benchmark; R25 research-findings synthesis — the strategy arc concluded: **no tradeable edge in any dimension on this data**, written up in `docs/RESEARCH_FINDINGS.md`)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -761,9 +761,26 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   honest cue to pivot to the pricing-side work, not more strategies. The benchmark was decisive (passive's 0.31
   Sharpe could be mistaken for a directional edge; the alpha shows it is beta, not timing), and R24 adds the
   benchmark-relative read the system needs for any future directional thesis.
-* **← NEXT (post-foundation):** the strategy line is concluded (no tradeable edge in any dimension on this
-  data); the pivot is to the **pricing-side work** + the deferred pricing extensions below, all riding on a
-  stack that is realistic end-to-end — added only when a named edge or a real need justifies them.
+* **R25 — Post-foundation: the research-findings synthesis. ✅ DONE (v0.90).** DOCS-ONLY — `docs/RESEARCH_FINDINGS.md`,
+  the deliverable the whole apparatus was built to produce. With R24 the post-foundation strategy arc (R8 +
+  R16–R24) is complete; R25 captures it into one honest research output sourced strictly from the committed
+  evidence (the cards, CHANGELOG, the R23 re-attribution sweep, the demos, the gov ledger): a per-strategy
+  ledger (thesis · edge-type · killing gate + deflated Sharpe · R23 units-honest attribution), the
+  cross-cutting conclusion (**no cleanly tradeable edge from this data** — the PnL is well-explained curve
+  structure, not noise, but level/directional-dominated; structural + relative premia don't pay net of cost;
+  the carry premium is real but swamped by directional exposure; the directional dimension's only return is
+  passive beta, which timing does not improve — R24 alpha −50.95), a **data-gap analysis** naming the specific
+  data each deferred strategy needs (the forward-looking value), a methodology note (the system worked as
+  designed — honest verdicts, three self-corrections, units/roll/basis-honest attribution), and a cross-check
+  reconciling every figure against the committed sources (the sweep + the trend demo re-run reproduced the
+  numbers exactly). No code / canonical changes (`core/init.q` version only). The "no edge here, and here's
+  why, and here's what would change it" conclusion is exactly what the governance spine + evidence layer exist
+  to make trustworthy.
+* **← NEXT (post-foundation):** the strategy arc is concluded and **written up** (`docs/RESEARCH_FINDINGS.md`:
+  no tradeable edge in any dimension on this data, with the data-gap analysis saying what to acquire to find
+  more); the fork opens cleanly — acquire the data a deferred thesis needs (§Deferred), or pivot to the
+  **pricing-side work** the strategy search doesn't depend on, all riding on a stack that is realistic
+  end-to-end — added only when a named edge or a real need justifies them.
 
 **Deferred (unchanged):** the "priced-in" gate; the drift monitor; IPC services and cloud CI / scheduled
 pipeline (§6, §7); pricing extensions (commodity swaps, Asian / spread options — §9 of the external
