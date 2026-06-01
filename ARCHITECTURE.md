@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.84 &nbsp;|&nbsp; **Tests:** 418 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17: validated on a prior strategy; R18: first risk-premium strategy; R19: first iterative / multi-leg result)
+**Version:** 0.85 &nbsp;|&nbsp; **Tests:** 419 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17: validated on a prior strategy; R18: first risk-premium; R19: iterative / multi-leg; R20: curvature, the dual attribution test)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -673,6 +673,19 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   the 2022 energy-shock crash memory attached), and the attribution ANSWERS R18: residual fraction 0.98 → 0.38
   and carry +0.69 → +2.62 with the beta stripped — the relative premium is real (a large negative level term
   shows equal-notional ≠ equal-risk; vol-weighting is the next iteration). Demo `apps/examples/xcommodity_carry.q`.
+* **R20 — Post-foundation: crude curve butterfly (curvature) mean-reversion. ✅ DONE (v0.85).** Completes the
+  curve-shape mean-reversion family (R16 = slope/level; R20 = curvature) with the cleanest attribution test in
+  the series. New `crudeButterfly` template (`templates/crude_butterfly.q`): fade the causal z of the
+  level/slope-neutral +1/−2/+1 three-contract fly (R10's curvature); trade the three actual contracts (R11),
+  its own stationarity gate. **Three crude LEGS via the R19 `legs` platform** (single-commodity; the only way
+  to get the level/slope/curvature attribution decomposition — a single-record fly would swamp curvature in
+  residual); `evidence/` + `attribution/` byte-for-byte UNCHANGED. PRE-REGISTERED params (NOT tuned).
+  Registered (`template` kind, conforms); carded (`card_crudeButterfly`, edge `structural`). On real CRUDE the
+  DUAL attribution: **level+slope ≈ 0 confirms the construction** (the fly is neutral — the tool that judges
+  it also proves it was built right), while residual-dominance (residual fraction 1.06) is the honest thesis
+  read — a near-curve fly's local curvature is not well-spanned by R10's global butterfly basis, so the
+  curvature sits in the residual; verdict not tradeable (research/cost), anyTradeable=0. Demo
+  `apps/examples/crude_butterfly.q`.
 * **← NEXT (post-foundation):** the deferred strategies + pricing extensions below (e.g. vol-weighted /
   cross-sectional carry, the natural next iteration on R19), all riding on a stack that is realistic
   end-to-end — added only when a named edge or a real need justifies them.

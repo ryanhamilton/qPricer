@@ -183,6 +183,18 @@
 .cfg.strategy.xCommodityCarry:`commodities`dispersionThreshold`lookback`holdingPeriod`txnCostRate`notional`minPersistence`minActiveFrac!(
     `CRUDE`GAS;0.05;10;10;0.0005;1f;0.5;0.05);
 
+/ --- crudeButterfly (Post-foundation R20): fade the curve BUTTERFLY (curvature) - the level/slope-neutral
+/ +1/-2/+1 three-contract combination that ISOLATES R10's curvature. PRE-REGISTERED params (FIXED, round,
+/ a-priori, NOT swept): legRanks = the three tenor RANKS (front / +2 / +4, ~equally spaced so +1/-2/+1
+/ neutralises level AND slope to first order); legWeights = the butterfly weights (+1 wing, -2 belly,
+/ +1 wing); zWindow = the causal trailing window for the butterfly z-score; entryThreshold = the |z| band to
+/ trade (fade: short the fly when z>+thr / long when z<-thr); maxHold = the max days a position is held
+/ (exit on a z-cross of zero or maxHold); rollBuffer = skip a contract within this many days of expiry (roll
+/ discipline, R11-style); txnCostRate / notional as elsewhere (the fly pays cost on all THREE legs - the most
+/ demanding cost gate yet). The stationarity gate bar is the global .cfg.templates.rv`maxAr1.
+.cfg.strategy.crudeButterfly:`legRanks`legWeights`zWindow`entryThreshold`maxHold`rollBuffer`txnCostRate`notional!(
+    0 2 4; 1 -2 1f; 60; 1.5; 20; 5; 0.0005; 1f);
+
 / --- factor layer: curve PCA (factor/factor.q), Research OS R8 ---
 / k = number of principal components (level/slope/curvature); tol/maxIter pin the deterministic
 / power iteration; nMaturities = the first-M tenor-ranked contracts forming the curve panel;
@@ -390,6 +402,16 @@
     "a dollar-neutral long/short removes the COMMON energy move to first order, so the residual PnL is the RELATIVE carry premium; both carry signals are causal (R14, through R9's door); the parameters are PRE-REGISTERED in .cfg.strategy.xCommodityCarry, NOT optimised to the gates";
     `riskPremium;
     "crude & gas in a stable relative term-structure regime; the crude-gas carry RELATIONSHIP can break (a gas-specific shock - dollar-neutrality hedges the COMMON move, not a relative one); only TWO assets = a thin / noisy cross-section; the cost-of-carry side depends on R14's ASSUMED r+storage; TWO-LEG liquidity / roll cost (the cost gate is more demanding - both legs pay)";
+    `energyShock2022;`;"qFDM research";2026.05.31);
+/ Post-foundation R20: the crudeButterfly template - fade the crude curve butterfly (curvature). Carded WITH
+/ a populated failure-mode field (curvature can stop mean-reverting; three-leg roll cost can swamp a thin
+/ edge) so it is gateable via .cards.gatedRun / .workflow.runReplay.
+.cfg.cards:.cfg.cards upsert `cardId`capabilityKind`capabilityName`version`intendedUse`assumptions`edgeSource`regimeApplicability`riskMemoryKey`govHypoId`owner`asOf!(
+    `card_crudeButterfly;`template;`crudeButterfly;`v1;
+    "Fade the causal z-score of the crude curve BUTTERFLY (R10's curvature): the level/slope-neutral +1/-2/+1 three-contract combination that isolates curvature; take the reverting position beyond +-threshold, trade the three actual contracts (R11/R10); harvest STRUCTURAL curvature mean-reversion";
+    "the butterfly is level/slope-neutral by construction (the attribution's level+slope ~ 0 is the construction check); the curvature mean-reverts (a stationarity gate bites if not); the curvature z is causal (trailing window through R9's door); the parameters (leg tenors / z-window / thresholds) are PRE-REGISTERED in .cfg.strategy.crudeButterfly, NOT optimised to the gates";
+    `structural;
+    "crude in a stable curvature regime; curvature can STOP mean-reverting / regime-shift; the THREE-leg roll cost can swamp a thin edge (the most demanding cost gate); near-roll liquidity on three legs; the level/slope neutrality is only FIRST-ORDER (large moves leak level/slope - the attribution flags it)";
     `energyShock2022;`;"qFDM research";2026.05.31);
 
 / --- backtest layer: per-strategy default configs (backtest/strategy.q) ---

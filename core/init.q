@@ -147,6 +147,9 @@
 / Cross-commodity carry template (Post-foundation R19: market-neutral crude-vs-gas relative carry; combines
 / two R12-shape legs into one record; reuses R18's helpers + the R13/R15 cores via additive `legs branches)
 \l templates/xcommodity_carry.q
+/ Crude butterfly template (Post-foundation R20: fade the curve curvature - a level/slope-neutral three-leg
+/ crude fly; reuses R6/R16 helpers + R10 curvature + the R19 legs platform for the level/slope/curvature attribution)
+\l templates/crude_butterfly.q
 / Evidence audit (Research OS R13: the deterministic pass/fail verifier on a replay run record +
 / the fail-safe precondition wrapper; ABOVE backtest/, BELOW gov/; reads the zone CONFIG not gov's
 / logic; gov UNMODIFIED; opens nothing at import)
@@ -165,4 +168,4 @@
 \l workflow/workflow.q
 
 .qfdm.loaded:1b;
-.qfdm.version:"0.84";
+.qfdm.version:"0.85";

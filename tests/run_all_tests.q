@@ -395,6 +395,7 @@
 .test.factorReplayFiles:(enlist "tests/factor_replay/test_factor_rv_replay.q");
 .test.carryStrategyFiles:(enlist "tests/carry_strategy/test_crude_carry.q");
 .test.xcarryFiles:(enlist "tests/xcarry/test_xcommodity_carry.q");
+.test.butterflyFiles:(enlist "tests/butterfly/test_crude_butterfly.q");
 
 .test.executionFiles:(
     "tests/execution/test_exec_fill.q";
@@ -532,6 +533,7 @@
     (`factorReplay; .test.factorReplayFiles);
     (`carryStrategy; .test.carryStrategyFiles);
     (`xcarry;     .test.xcarryFiles);
+    (`butterfly;  .test.butterflyFiles);
     (`strategy;   .test.strategyFiles));
 
 / --- Runner with timing ---
