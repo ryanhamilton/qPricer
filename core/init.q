@@ -153,6 +153,9 @@
 / Vol-weighted cross-commodity carry template (Post-foundation R21: R19's crude-vs-gas carry, equal-RISK
 / (1/sigma) leg sizing - the fix for R19's level leak; reuses R19's composition + helpers, only sizing changes)
 \l templates/xcommodity_carry_vw.q
+/ Directional crude trend template (Post-foundation R24: time-series momentum + a passive-long benchmark /
+/ alpha-over-beta - does timing the directional dimension beat holding it; reuses R18's helpers; after crude_carry.q)
+\l templates/crude_trend.q
 / Evidence audit (Research OS R13: the deterministic pass/fail verifier on a replay run record +
 / the fail-safe precondition wrapper; ABOVE backtest/, BELOW gov/; reads the zone CONFIG not gov's
 / logic; gov UNMODIFIED; opens nothing at import)
@@ -171,4 +174,4 @@
 \l workflow/workflow.q
 
 .qfdm.loaded:1b;
-.qfdm.version:"0.88";
+.qfdm.version:"0.89";

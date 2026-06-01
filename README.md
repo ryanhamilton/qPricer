@@ -26,7 +26,7 @@ The repository is one monorepo organized into layers (dependencies flow downward
 | Config | `.cfg` layer (`config/base.q` + `QPRICER_ENV` overrides) |
 | Portfolio | Strategy allocator (`.alloc`): equal-weight / inverse-vol / min-variance / risk-parity / max-Sharpe / mean-variance, long-only + cap + turnover constraints, causal walk-forward OOS comparison |
 | Regime | Market-state engine (`.regime`): per-(commodity,date) curve/vol/liquidity/roll/season fingerprint + regime-conditional performance breakdown |
-| Tests | 420 passing tests (`q tests/run_all_tests.q`) |
+| Tests | 421 passing tests (`q tests/run_all_tests.q`) |
 
 ### Not Yet Supported
 
@@ -104,7 +104,7 @@ q-fdm-option-pricer/
 ├── attribution/   # PnL explain + bucketed curve risk (.attribution) — level/slope/curvature/carry/residual + a local-basis mode (R22) + units-aware/roll-aware decomposition (R23: dollar-vs-return inferred, return path byte-identical; the re-attribution sweep showed R17-R21's "high residual" was a unit artifact, the real PnL is curve structure not noise); above backtest/
 ├── portfolio/     # strategy allocator (.alloc) — risk-parity / min-var / etc., OOS compare
 ├── factor/        # curve factor decomposition (.factor) — PCA level/slope/curvature; first capability on the spine
-├── templates/     # problem templates (.template) — directional (faithful) + relativeValue + factorRelativeValue + seasonalCalSpread (R16) + factorRvReplay (R17) + crudeCarry (R18: term-structure / roll-yield risk-premium carry) + xCommodityCarry (R19: market-neutral crude-vs-gas relative carry) + crudeButterfly (R20: curve curvature mean-reversion) + xCommodityCarryVW (R21: vol-weighted/equal-risk cross-commodity carry)
+├── templates/     # problem templates (.template) — directional (faithful) + relativeValue + factorRelativeValue + seasonalCalSpread (R16) + factorRvReplay (R17) + crudeCarry (R18: term-structure / roll-yield risk-premium carry) + xCommodityCarry (R19: market-neutral crude-vs-gas relative carry) + crudeButterfly (R20: curve curvature mean-reversion) + xCommodityCarryVW (R21: vol-weighted/equal-risk cross-commodity carry) + crudeTrend (R24: directional time-series momentum + a passive-long benchmark / alpha-over-beta — the strategy line concluded: no tradeable edge in any dimension on this data)
 ├── gov/           # research governance (.gov) — registry + trials ledger + deflated Sharpe + gate cascade
 ├── cards/         # model cards (.cards) — knowledge plug-in: contract + edge + gov-derived validation + audit
 ├── workflow/      # the bounded research loop (.workflow) — composes gov/cards/template/regime; escalates to the human

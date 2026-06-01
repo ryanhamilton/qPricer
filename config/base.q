@@ -206,6 +206,19 @@
 .cfg.strategy.xCommodityCarryVW:`commodities`dispersionThreshold`lookback`holdingPeriod`volWindow`txnCostRate`notional`minPersistence`minActiveFrac!(
     `CRUDE`GAS;0.05;10;10;20;0.0005;1f;0.5;0.05);
 
+/ --- crudeTrend (Post-foundation R24): a DIRECTIONAL time-series-momentum / trend-following strategy. R23
+/ showed the PnL on this data is all in the directional dimension; R24 tests whether TIMING it beats HOLDING
+/ it (alpha over beta). PRE-REGISTERED params, FIXED + round (a-priori, NOT swept - the lookback IS the knob
+/ momentum overfits on): lookback = the causal trailing window (days) whose summed return is the trend signal
+/ (60 = a classic ~3-month medium-term trend); threshold = the trend dead-band (LONG when the trailing return
+/ > +threshold, SHORT < -threshold, FLAT in between; 0 = a pure sign-of-trend timer); holdingPeriod = the min
+/ days a position is held before it may flip (cuts whipsaw); allowShort = 1b -> SHORT downtrends (full
+/ time-series momentum), 0b -> FLAT instead; txnCostRate / notional as the other strategies; minPersistence =
+/ the trend-PERSISTENCE gate bar (AR(1) of the daily $-changes; >= 0 = momentum, a mean-reverting series < 0
+/ is the wrong tool and is rejected). The benchmark is a passive-long replay (always long the active contract).
+.cfg.strategy.crudeTrend:`lookback`threshold`holdingPeriod`allowShort`txnCostRate`notional`minPersistence!(
+    60;0f;5;1b;0.0005;1f;0f);
+
 / --- factor layer: curve PCA (factor/factor.q), Research OS R8 ---
 / k = number of principal components (level/slope/curvature); tol/maxIter pin the deterministic
 / power iteration; nMaturities = the first-M tenor-ranked contracts forming the curve panel;
@@ -441,6 +454,15 @@
     `riskPremium;
     "crude & gas in a stable relative term-structure regime; the crude-gas carry RELATIONSHIP can break (a gas-specific shock - equal-risk neutrality hedges the COMMON move, not a relative one); the vol estimate is itself noisy / trailing (it lags a vol regime change); only TWO assets = a thin cross-section; r+storage assumed; TWO-LEG roll cost (vol-weighting cleans the isolation, it does NOT lower the cost gate)";
     `energyShock2022;`;"qFDM research";2026.05.31);
+/ Post-foundation R24: the crudeTrend template - a DIRECTIONAL time-series-momentum / trend strategy. Carded
+/ WITH a populated failure-mode field (trends reverse / whipsaw; the directional edge must be ALPHA OVER BETA).
+.cfg.cards:.cfg.cards upsert `cardId`capabilityKind`capabilityName`version`intendedUse`assumptions`edgeSource`regimeApplicability`riskMemoryKey`govHypoId`owner`asOf!(
+    `card_crudeTrend;`template;`crudeTrend;`v1;
+    "Time-series momentum / trend-following on crude: LONG when the causal trailing-lookback return is positive (> +threshold), SHORT/FLAT when negative; trade the actual front contract (R11), book NET of cost (R12); the edge is the RISK-PREMIUM to trend-following - but for a DIRECTIONAL strategy it must be ALPHA OVER BETA (timing), measured against a passive-long-crude benchmark, NOT absolute return (which includes beta)";
+    "the trend signal is causal (a trailing-lookback sum of roll-clean daily returns, through R9's door); trend-following needs MOMENTUM (a trend-persistence gate - AR(1) of the daily changes >= minPersistence - bites on a mean-reverting / non-trending series); the parameters (lookback / threshold / holdingPeriod) are PRE-REGISTERED in .cfg.strategy.crudeTrend and NOT swept (the lookback IS the knob momentum overfits on); a LEVEL-dominated attribution is EXPECTED for a directional strategy (the thesis IS directional), so it is NOT a red flag - the meaningful test is benchmark-relative ALPHA";
+    `riskPremium;
+    "crude in a persistent trending regime; trends REVERSE (whipsaw losses at turning points - the classic momentum failure); a directional book is fully exposed to a directional crash (the energyShock2022 / covid2020 down-moves); the absolute Sharpe can be cleared by simply TIMING beta (passive long crude also has a Sharpe), so absolute gates are NOT sufficient - the edge must be ALPHA OVER the passive-long benchmark; transaction / roll cost from flipping erodes a marginal trend edge";
+    `energyShock2022;`;"qFDM research";2026.06.01);
 
 / --- backtest layer: per-strategy default configs (backtest/strategy.q) ---
 / Each .strategy.<name>.defaultConfig returns its dict below. Values, TYPES and

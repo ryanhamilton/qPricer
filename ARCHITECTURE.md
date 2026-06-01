@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.88 &nbsp;|&nbsp; **Tests:** 420 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature; R21 vol-weighted carry; R22 local-basis attribution; R23 attribution units/roll fix + re-attribution of R16–R21 — making the residual signal units-honest on the real dollar runs)
+**Version:** 0.89 &nbsp;|&nbsp; **Tests:** 421 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature; R21 vol-weighted carry; R22 local-basis attribution; R23 attribution units/roll fix + re-attribution; R24 directional trend + passive-long benchmark — the strategy line concluded: no tradeable edge in any dimension on this data)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -737,8 +737,33 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   dollar-neutral / equal-risk book still carries directional exposure). What MOVES is the absolute residual
   fractions and the characterization of R17/R20; what SURVIVES is every directional finding and every no-edge
   verdict. The architecture telling the truth about its own prior numbers.
-* **← NEXT (post-foundation):** the deferred strategies + pricing extensions below, all riding on a stack
-  that is realistic end-to-end — added only when a named edge or a real need justifies them.
+* **R24 — Post-foundation: a directional crude trend strategy + a passive-long benchmark. ✅ DONE (v0.89).**
+  The test that DECIDES the strategy line. R23 showed the PnL on this data is entirely LEVEL/directional —
+  the relative (carry) and structural (slope/curvature) dimensions carry no edge — so R24 asks whether the
+  DIRECTIONAL dimension itself is tradeable: a timing edge OVER passive beta, or just being long crude? For a
+  directional strategy the reads INVERT (the point of the milestone): a LEVEL-dominated attribution is
+  EXPECTED (not a red flag), and the absolute deflated-Sharpe gate is NOT sufficient — passive long crude also
+  has a Sharpe, so timed beta can clear it while adding nothing. The meaningful, decisive test is
+  benchmark-relative ALPHA. New `crudeTrend` template (`.template.crudeTrend.*`): a time-series-momentum rule
+  (LONG when the causal trailing-`lookback` return is positive, SHORT/FLAT when negative; the actual contract
+  R11 names, NET of cost, an R12-shape record), reusing R18's helpers; its trend-PERSISTENCE gate reuses R18's
+  AR(1) ORIENTED for persistence (a mean-reverting series is rejected); a `.template.crudeTrend.benchmark`
+  replays a passive-long book over the same period (same roll + costs) for the alpha-over-beta read. Carded,
+  pre-registered, run through `.workflow.runReplay` (UNCHANGED). ADDITIVE: the foundation / `.workflow.runReplay`
+  / `gov/` / the cores byte-for-byte unchanged; **421/0** (+1 `trend` group test). **The conclusive verdict
+  (real CRUDE, NOT tuned):** the trend-persistence gate FAILS a-priori (AR1 ≈ −0.002 — daily crude returns are
+  not momentum-persistent), and the benchmark settles it — trend Sharpe **0.002** vs passive-long Sharpe
+  **0.31** (alpha **−50.95**, beatsPassive=0): timing the directional dimension DESTROYED the beta rather than
+  adding to it (`anyTradeable=0`; the regime skeptic attaches `crude_2023_rangebound` "trend/momentum
+  whipsawed" + `crude_2022_energyShock` "late momentum chasers round-tripped"). **The strategy line is
+  CONCLUDED for this data:** with the relative + structural dimensions no-edge (R23) and the directional
+  dimension no-edge-over-passive (R24), there is no tradeable edge in ANY dimension on this dataset — the
+  honest cue to pivot to the pricing-side work, not more strategies. The benchmark was decisive (passive's 0.31
+  Sharpe could be mistaken for a directional edge; the alpha shows it is beta, not timing), and R24 adds the
+  benchmark-relative read the system needs for any future directional thesis.
+* **← NEXT (post-foundation):** the strategy line is concluded (no tradeable edge in any dimension on this
+  data); the pivot is to the **pricing-side work** + the deferred pricing extensions below, all riding on a
+  stack that is realistic end-to-end — added only when a named edge or a real need justifies them.
 
 **Deferred (unchanged):** the "priced-in" gate; the drift monitor; IPC services and cloud CI / scheduled
 pipeline (§6, §7); pricing extensions (commodity swaps, Asian / spread options — §9 of the external
