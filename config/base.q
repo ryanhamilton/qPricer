@@ -279,7 +279,11 @@
 / contracts in the LOCAL sub-curve fit around each traded contract for the local-basis attribution mode -
 / a SMALL FIXED window (still only 3 factors: local level/slope/curvature), so it captures structure
 / localized to the traded tenors WITHOUT being flexible enough to explain noise (the honesty safeguard).
-.cfg.attribution:`reconcileTol`buckets`localWindow!(1e-8; 0 0.25 0.5 1 2 5f; 5);
+/ defaultUnits (R23): the price-PnL convention the decomposition reconciles to - `infer (the default:
+/ decide dollar-vs-return per run from its booked PnL), or force `dollar / `return globally. DOLLAR runs
+/ (position*dP, the strategy templates) attribute price-unit components; RETURN runs (position*dP/Pp, R15's
+/ tests + the generic R12 replay) divide by Pp (the original, byte-identical path).
+.cfg.attribution:`reconcileTol`buckets`localWindow`defaultUnits!(1e-8; 0 0.25 0.5 1 2 5f; 5; `infer);
 
 / --- cards layer: curated model cards (cards/cards.q), Research OS R5 ---
 / One structured card per KEY capability (the 4 R2-registered capabilities + the key

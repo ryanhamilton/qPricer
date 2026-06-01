@@ -106,4 +106,54 @@ chk[lNoise`reconciled; "(R22 safeguard) the noise LOCAL decomposition reconciles
 chk[0.5<lNoise`residualFraction; "(R22 safeguard) genuine high-frequency noise keeps a HIGH local residual - 3 fixed factors do NOT spuriously explain it (residual not forced to 0)"];
 chk[`genuineNoise=(.attribution.residualSplit r4)`verdict; "(R22 safeguard) residualSplit classifies the noise run as genuineNoise (the real red flag)"];
 
+/ === (R23) UNITS: a DOLLAR-booked run (stepPnl = position*dP, as the R16-R21 strategy templates book) is
+/ decomposed in DOLLAR units (no /Pp) -> the components are correctly sized and the residual is HONEST, NOT
+/ inflated ~1 by the unit mismatch. Same parallel +0.5 move as test 1, but booked in DOLLARS. ===
+mkRunD:{[prevDate;curDate;heldYM;heldDP]                       / DOLLAR-booked: stepPnl is the $ price change
+    steps:flip `stepIndex`stepDate`activeContract`position`frontReturn`positionPnl`stepPnl`totalCost`financingCost!(
+        (0 1); (prevDate;curDate); (heldYM;heldYM); (1f;1f); (0f;heldDP); (0f;heldDP); (0f;heldDP); (0f;0f); (0f;0f));
+    `meta`steps`rollEvents`provenance!((`commodity`fromDate`toDate!(`SYN;prevDate;curDate)); steps; (); ())};
+futures:(mkSnap[pd;6#60f]),mkSnap[cd;6#60.5f];
+rD:mkRunD[pd;cd;first yms;0.5f];                               / front held; $ price change = +0.5
+aD:.attribution.pnl rD;                                        / units INFERRED -> dollar
+chk[aD`reconciled; "(R23 dollar) the dollar decomposition reconciles to the realized total"];
+chk[apx[aD`total;0.5;1e-9]; "(R23 dollar) total equals the realized 0.5"];
+chk[(abs aD`level)>(abs aD`slope)+(abs aD`curvature)+abs aD`carry; "(R23 dollar) level is the dominant component (a parallel move)"];
+chk[1e-6>aD`residualFraction; "(R23 dollar) the residual fraction is ~0 - a parallel move is FULLY explained, NOT residual-dominated by a unit mismatch"];
+/ THE UNIT-MISMATCH CONTRAST: force RETURN units on the SAME dollar run -> components come out ~1/Pp too small
+/ -> residual absorbs ~the whole PnL (residualFraction ~1). This is exactly the distortion R23 removes.
+aDmis:.attribution.pnl rD,(enlist`units)!enlist `return;
+chk[0.9<aDmis`residualFraction; "(R23 dollar) attributing the dollar run in RETURN units inflates residual to ~1 (the bug R23 fixes - SKILL #27)"];
+
+/ === (R23) ROLL ROUTING: a roll (the difference-method contract switch) is not a curve move -> the roll-step
+/ booked PnL lands in CARRY, with level/slope/curvature = 0 and NO residual pollution (known-answer). ===
+mkRollRun:{[prevDate;curDate;fromYM;toYM;rollPnl]
+    steps:flip `stepIndex`stepDate`activeContract`isRoll`position`positionPnl`stepPnl`totalCost!(
+        (0 1); (prevDate;curDate); (fromYM;toYM); (0b;1b); (1f;1f); (0f;rollPnl); (0f;rollPnl); (0f;0f));
+    `meta`steps`rollEvents`provenance!((`commodity`fromDate`toDate!(`SYN;prevDate;curDate)); steps; (); ())};
+futures:(mkSnap[pd;6#60f]),mkSnap[cd;6#61f];
+rR:mkRollRun[pd;cd;first yms; yms 1; 0.7f];                    / step 1 is a roll booking +0.7
+aR:.attribution.pnl rR;
+chk[aR`reconciled; "(R23 roll) the decomposition reconciles"];
+chk[apx[aR`carry;0.7;1e-9]; "(R23 roll) the roll-step PnL lands in CARRY"];
+chk[1e-9>(abs aR`level)+(abs aR`slope)+abs aR`curvature; "(R23 roll) a roll books NO level/slope/curvature (a contract switch is not a curve move)"];
+chk[1e-9>abs aR`residual; "(R23 roll) the roll PnL does NOT pollute residual"];
+
+/ === (R23) LOCAL basis on a DOLLAR run: the R22 basis effect (LOCAL residual < GLOBAL on localized curvature)
+/ now holds on a DOLLAR-booked run, not just the return-booked synthetic of test R22. Same localized-curvature
+/ fly as R22, but each leg booked in DOLLARS (stepPnl = position*dP). ===
+mkLegD:{[ym;w;dts] px:pxOf[;ym] each dts; n:count dts;
+    `meta`steps!((`commodity`strategy!(`SYN;`hand)); flip `stepDate`activeContract`position`stepPnl!(dts; n#ym; n#w; (0f,-1_n#w)*0f,1_deltas px))};
+futures:mkFut[flyYms;flyMexp;flyDts;0 3 6 9 12f;nearBow];
+flyRunD:(`meta`legs)!((`commodity`units!(`SYN;`dollar)); mkLegD[;;flyDts]'[flyYms 0 2 4; 1 -2 1f]);
+gFlyD:.attribution.pnl flyRunD; lFlyD:.attribution.pnlLocal flyRunD;
+chk[lFlyD`reconciled; "(R23 local dollar) the LOCAL dollar decomposition reconciles to the realized total"];
+chk[(lFlyD`residualFraction) < gFlyD`residualFraction; "(R23 local dollar) LOCAL residual fraction < GLOBAL on a DOLLAR-booked run (the R22 basis effect on the dollar runs real strategies produce)"];
+chk[0.35>lFlyD`residualFraction; "(R23 local dollar) the LOCAL residual is LOW on the dollar run (curvature captured -> structure, not a unit artifact)"];
+
+/ === (R23) the units-aware path RECONCILES for BOTH conventions, via inference AND explicit override ===
+chk[(.attribution.pnl r1)~.attribution.pnl r1,(enlist`units)!enlist `return; "(R23) inferred-return == explicit-return on a return run (the inference matches the historical default byte-for-byte)"];
+chk[(.attribution.pnl rD,(enlist`units)!enlist `dollar)`reconciled; "(R23) explicit dollar units reconcile"];
+chk[(.attribution.pnl r1,(enlist`units)!enlist `return)`reconciled; "(R23) explicit return units reconcile"];
+
 -1 "test_attribution: PASS";

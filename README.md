@@ -101,7 +101,7 @@ q-fdm-option-pricer/
 ├── evidence/      # the evidence audit (.evidence) — deterministic pass/fail verifier on a replay run + fail-safe gatedRun
 ├── season/        # curve/spread seasonality (.season) — causal same-month z (R16's signal); distinct from signals/
 ├── carry/         # carry/storage economics (.carry) — implied carry, convenience yield, carry signal, inventory proxy
-├── attribution/   # PnL explain + bucketed curve risk (.attribution) — level/slope/curvature/carry/residual + a local-basis mode (R22: global-vs-local residual distinguishes basis-mismatch from noise); above backtest/
+├── attribution/   # PnL explain + bucketed curve risk (.attribution) — level/slope/curvature/carry/residual + a local-basis mode (R22) + units-aware/roll-aware decomposition (R23: dollar-vs-return inferred, return path byte-identical; the re-attribution sweep showed R17-R21's "high residual" was a unit artifact, the real PnL is curve structure not noise); above backtest/
 ├── portfolio/     # strategy allocator (.alloc) — risk-parity / min-var / etc., OOS compare
 ├── factor/        # curve factor decomposition (.factor) — PCA level/slope/curvature; first capability on the spine
 ├── templates/     # problem templates (.template) — directional (faithful) + relativeValue + factorRelativeValue + seasonalCalSpread (R16) + factorRvReplay (R17) + crudeCarry (R18: term-structure / roll-yield risk-premium carry) + xCommodityCarry (R19: market-neutral crude-vs-gas relative carry) + crudeButterfly (R20: curve curvature mean-reversion) + xCommodityCarryVW (R21: vol-weighted/equal-risk cross-commodity carry)

@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.87 &nbsp;|&nbsp; **Tests:** 420 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature; R21 vol-weighted carry; R22 local-basis attribution — sharpening the residual signal the judge relies on)
+**Version:** 0.88 &nbsp;|&nbsp; **Tests:** 420 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature; R21 vol-weighted carry; R22 local-basis attribution; R23 attribution units/roll fix + re-attribution of R16–R21 — making the residual signal units-honest on the real dollar runs)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -715,6 +715,28 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   `apps/examples/attribution_local_basis.q`. q gotcha (skill #27): R15 attribution is return-unit, so a
   dollar-booked run is residual-dominated regardless of basis — the R20 finding was partly this unit effect.
   After R22, every subsequent verdict's residual means what the governance layer assumes it means.
+* **R23 — Post-foundation: the attribution units/roll fix + the re-attribution of R16–R21. ✅ DONE (v0.88).**
+  The correction R22's skill #27 motivated. R15 divided by `Pp` (RETURN units) but every R16–R21 strategy
+  template books DOLLAR PnL (`position·ΔP`), so attributed in the wrong units the components came out `~1/Pp`
+  too small and the residual absorbed almost the whole PnL — residual-dominated by a UNIT ARTIFACT, not basis
+  or noise (most of R20's 1.06). R23 makes `.attribution.*` **units-aware** (`.attribution.__resolveUnits`
+  decides dollar-vs-return per run — an explicit `units` key / `.cfg.attribution.defaultUnits` wins, else it
+  INFERS from the booked vs reconstructed gross, aggregating over legs, strict-tie → return), **routes roll-step
+  PnL to carry** (a contract switch is not a curve move), and makes R22's local basis units-correct too — the
+  RETURN path is **byte-identical** (verified new-vs-old) and the DOLLAR path reconciles to `position·ΔP`. Also
+  hardened the reconciliation against null `stepPnl` (q's `sum` skips nulls → the plug broke on R16/R17 real
+  data; zero the components where realized PnL is null — skill #28). Infrastructure (not registered/carded);
+  `test_attribution` extended in place (count unchanged, 420/0). **The re-attribution sweep**
+  (`apps/examples/reattribution_sweep.q`, real CRUDE/GAS over trainValidate) re-runs each R16–R21 replay
+  units-correct. **The honest reckoning — every LOCAL residual fraction is now low (0.008–0.146): none of these
+  strategies' PnL is genuinely unexplained noise; it is curve structure** (mostly directional LEVEL for the carry
+  strategies, local curvature for R20). R17 0.95→0.094 (structural, never noise — the no-edge verdict still
+  holds); R18 0.98→0.225 (level −90 dominant / carry +36 secondary — "directional, not clean carry" confirmed);
+  R20 GLOBAL 1.877 but LOCAL 0.146 curvature-dominant with level+slope ≈ 0 (both reads confirmed; R22's
+  local-basis payoff on a real dollar run); R19/R21 carry +26/+24 real but level −43/−92 dominant (the
+  dollar-neutral / equal-risk book still carries directional exposure). What MOVES is the absolute residual
+  fractions and the characterization of R17/R20; what SURVIVES is every directional finding and every no-edge
+  verdict. The architecture telling the truth about its own prior numbers.
 * **← NEXT (post-foundation):** the deferred strategies + pricing extensions below, all riding on a stack
   that is realistic end-to-end — added only when a named edge or a real need justifies them.
 
