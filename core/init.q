@@ -150,6 +150,9 @@
 / Crude butterfly template (Post-foundation R20: fade the curve curvature - a level/slope-neutral three-leg
 / crude fly; reuses R6/R16 helpers + R10 curvature + the R19 legs platform for the level/slope/curvature attribution)
 \l templates/crude_butterfly.q
+/ Vol-weighted cross-commodity carry template (Post-foundation R21: R19's crude-vs-gas carry, equal-RISK
+/ (1/sigma) leg sizing - the fix for R19's level leak; reuses R19's composition + helpers, only sizing changes)
+\l templates/xcommodity_carry_vw.q
 / Evidence audit (Research OS R13: the deterministic pass/fail verifier on a replay run record +
 / the fail-safe precondition wrapper; ABOVE backtest/, BELOW gov/; reads the zone CONFIG not gov's
 / logic; gov UNMODIFIED; opens nothing at import)
@@ -168,4 +171,4 @@
 \l workflow/workflow.q
 
 .qfdm.loaded:1b;
-.qfdm.version:"0.85";
+.qfdm.version:"0.86";

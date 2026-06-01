@@ -195,6 +195,17 @@
 .cfg.strategy.crudeButterfly:`legRanks`legWeights`zWindow`entryThreshold`maxHold`rollBuffer`txnCostRate`notional!(
     0 2 4; 1 -2 1f; 60; 1.5; 20; 5; 0.0005; 1f);
 
+/ --- xCommodityCarryVW (Post-foundation R21): R19's market-neutral cross-commodity carry, but with the two
+/ legs sized by CAUSAL trailing realised volatility (equal-RISK / risk-parity, not equal-notional) - the
+/ direct fix for R19's residual LEVEL leak (equal-notional != equal-risk: crude and gas have different vols,
+/ so a dollar-neutral book still carries directional exposure). PRE-REGISTERED params (FIXED, round, a-priori,
+/ NOT swept): commodities + dispersionThreshold + lookback + holdingPeriod + minPersistence + minActiveFrac
+/ are R19's VERBATIM (the only change from R19 is the leg sizing); volWindow = the causal trailing window for
+/ each leg's realised $ vol (sized inversely - the higher-vol leg gets proportionally less notional so the
+/ legs contribute EQUAL RISK, driving the level term toward ~0). txnCostRate / notional as elsewhere.
+.cfg.strategy.xCommodityCarryVW:`commodities`dispersionThreshold`lookback`holdingPeriod`volWindow`txnCostRate`notional`minPersistence`minActiveFrac!(
+    `CRUDE`GAS;0.05;10;10;20;0.0005;1f;0.5;0.05);
+
 / --- factor layer: curve PCA (factor/factor.q), Research OS R8 ---
 / k = number of principal components (level/slope/curvature); tol/maxIter pin the deterministic
 / power iteration; nMaturities = the first-M tenor-ranked contracts forming the curve panel;
@@ -412,6 +423,15 @@
     "the butterfly is level/slope-neutral by construction (the attribution's level+slope ~ 0 is the construction check); the curvature mean-reverts (a stationarity gate bites if not); the curvature z is causal (trailing window through R9's door); the parameters (leg tenors / z-window / thresholds) are PRE-REGISTERED in .cfg.strategy.crudeButterfly, NOT optimised to the gates";
     `structural;
     "crude in a stable curvature regime; curvature can STOP mean-reverting / regime-shift; the THREE-leg roll cost can swamp a thin edge (the most demanding cost gate); near-roll liquidity on three legs; the level/slope neutrality is only FIRST-ORDER (large moves leak level/slope - the attribution flags it)";
+    `energyShock2022;`;"qFDM research";2026.05.31);
+/ Post-foundation R21: the xCommodityCarryVW template - R19's cross-commodity carry, vol-weighted (equal-risk).
+/ Carded WITH a populated failure-mode field (the relationship can break; the vol estimate is itself noisy).
+.cfg.cards:.cfg.cards upsert `cardId`capabilityKind`capabilityName`version`intendedUse`assumptions`edgeSource`regimeApplicability`riskMemoryKey`govHypoId`owner`asOf!(
+    `card_xCommodityCarryVW;`template;`xCommodityCarryVW;`v1;
+    "Vol-weighted market-neutral cross-commodity carry: R19's long higher-carry / short lower-carry crude-vs-gas, but each leg sized inversely to its CAUSAL trailing realised volatility (equal-RISK, not equal-notional) so the common energy beta is neutralised PROPERLY and the relative carry premium is isolated as cleanly as the data allows";
+    "equal-RISK sizing (leg ~ 1/sigma, causal trailing vol through R9's door) drives the level term toward ~0, the proper beta-neutrality R19's equal-notional book lacked; both carry signals are causal (R14); the parameters are PRE-REGISTERED in .cfg.strategy.xCommodityCarryVW (R19's + a vol window), NOT optimised to the gates";
+    `riskPremium;
+    "crude & gas in a stable relative term-structure regime; the crude-gas carry RELATIONSHIP can break (a gas-specific shock - equal-risk neutrality hedges the COMMON move, not a relative one); the vol estimate is itself noisy / trailing (it lags a vol regime change); only TWO assets = a thin cross-section; r+storage assumed; TWO-LEG roll cost (vol-weighting cleans the isolation, it does NOT lower the cost gate)";
     `energyShock2022;`;"qFDM research";2026.05.31);
 
 / --- backtest layer: per-strategy default configs (backtest/strategy.q) ---

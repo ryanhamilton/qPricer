@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.85 &nbsp;|&nbsp; **Tests:** 419 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17: validated on a prior strategy; R18: first risk-premium; R19: iterative / multi-leg; R20: curvature, the dual attribution test)
+**Version:** 0.86 &nbsp;|&nbsp; **Tests:** 420 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature/dual-attribution; R21 vol-weighted carry — a verdict that corrected its own hypothesis)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -686,9 +686,24 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   read — a near-curve fly's local curvature is not well-spanned by R10's global butterfly basis, so the
   curvature sits in the residual; verdict not tradeable (research/cost), anyTradeable=0. Demo
   `apps/examples/crude_butterfly.q`.
-* **← NEXT (post-foundation):** the deferred strategies + pricing extensions below (e.g. vol-weighted /
-  cross-sectional carry, the natural next iteration on R19), all riding on a stack that is realistic
-  end-to-end — added only when a named edge or a real need justifies them.
+* **R21 — Post-foundation: vol-weighted (equal-risk) cross-commodity carry. ✅ DONE (v0.86).** The
+  attribution-driven next iteration of R19 (whose level term flagged that equal-notional ≠ equal-risk) — and
+  a verdict that CORRECTED ITS OWN HYPOTHESIS. New `xCommodityCarryVW` template (`templates/xcommodity_carry_vw.q`):
+  R19's signal but each leg sized ∝ 1/σ (a CAUSAL trailing realised $ vol, geometric-mean-normalised),
+  reusing R19's `__legReplay` + gate + the `legs`-aware audit/attribution — the ONLY delta is the leg sizing.
+  PRE-REGISTERED params (NOT tuned, run ONCE). Registered (`template` kind, conforms); carded
+  (`card_xCommodityCarryVW`, edge `riskPremium`). R19's template / R20 / `.workflow.runReplay` / `gov/` / the
+  cores byte-for-byte UNCHANGED. **The honest finding (the judge vs the hypothesis):** equal-risk sizing did
+  NOT drive the level term toward ~0 — it INCREASED it (−7.46 → −25.9) and the residual fraction rose
+  (0.38 → 0.69). The attribution surfaced the real lesson: "equal RISK" (equal $ P&L vol) ≠ "directional-neutral"
+  (which needs equal DOLLAR NOTIONAL), and more deeply crude & gas lack a clean common beta to neutralise (they
+  decorrelate), so NO market-neutral sizing cleanly removes the directional exposure — the market-neutral
+  PREMISE itself is weak for this pair. **Conclusive read on cross-commodity carry from this data:** real (R19)
+  but not cleanly isolatable or tradeable; equal-risk sizing EXPOSED the weak common-beta premise rather than
+  perfecting the isolation. A verdict that corrects its own hypothesis is exactly what the judge is for. Demo
+  `apps/examples/xcommodity_carry_vw.q`.
+* **← NEXT (post-foundation):** the deferred strategies + pricing extensions below, all riding on a stack
+  that is realistic end-to-end — added only when a named edge or a real need justifies them.
 
 **Deferred (unchanged):** the "priced-in" gate; the drift monitor; IPC services and cloud CI / scheduled
 pipeline (§6, §7); pricing extensions (commodity swaps, Asian / spread options — §9 of the external
