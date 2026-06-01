@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.86 &nbsp;|&nbsp; **Tests:** 420 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature/dual-attribution; R21 vol-weighted carry — a verdict that corrected its own hypothesis)
+**Version:** 0.87 &nbsp;|&nbsp; **Tests:** 420 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature; R21 vol-weighted carry; R22 local-basis attribution — sharpening the residual signal the judge relies on)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -702,6 +702,19 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   but not cleanly isolatable or tradeable; equal-risk sizing EXPOSED the weak common-beta premise rather than
   perfecting the isolation. A verdict that corrects its own hypothesis is exactly what the judge is for. Demo
   `apps/examples/xcommodity_carry_vw.q`.
+* **R22 — Post-foundation: a local / traded-tenor curve-factor basis for the PnL attribution. ✅ DONE (v0.87).**
+  The instrument refinement R20 motivated: R20's butterfly was built correctly (global level+slope ≈ 0) yet
+  residual-dominated, because a near-curve fly's LOCAL curvature is not spanned by R15's GLOBAL basis — so
+  "residual = noise" had a blind spot (localized real structure looks like noise). New `.attribution.pnlLocal`
+  fits the same 3 fixed factors on the TRADED-tenor sub-curve (+ `.attribution.residualSplit` reporting GLOBAL
+  vs LOCAL residual); the global-basis `.attribution.pnl` is byte-identical. **The global-vs-local distinction:**
+  LOW local + HIGH global = localized real structure the global basis missed (the R20 case); HIGH local =
+  genuine idiosyncratic noise (the real red flag). **The honesty safeguard:** 3 fixed factors (not one per
+  contract), overdetermined window, so a genuine high-frequency move keeps a HIGH local residual — the local
+  factors recover residual's meaning, they do not destroy it. Infrastructure (not registered/carded). Demo
+  `apps/examples/attribution_local_basis.q`. q gotcha (skill #27): R15 attribution is return-unit, so a
+  dollar-booked run is residual-dominated regardless of basis — the R20 finding was partly this unit effect.
+  After R22, every subsequent verdict's residual means what the governance layer assumes it means.
 * **← NEXT (post-foundation):** the deferred strategies + pricing extensions below, all riding on a stack
   that is realistic end-to-end — added only when a named edge or a real need justifies them.
 

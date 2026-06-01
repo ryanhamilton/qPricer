@@ -275,7 +275,11 @@
 / reconcileTol = the tolerance for the decomposition reconciliation (level+slope+curvature+carry+
 / residual == the run's realized total; the residual is the PLUG that absorbs the unexplained curve
 / move + costs). buckets = the tenor bucket edges (years) for the bucketed curve delta.
-.cfg.attribution:`reconcileTol`buckets!(1e-8; 0 0.25 0.5 1 2 5f);
+/ reconcileTol/buckets: the global-basis decomposition (R15). localWindow (R22): the number of curve
+/ contracts in the LOCAL sub-curve fit around each traded contract for the local-basis attribution mode -
+/ a SMALL FIXED window (still only 3 factors: local level/slope/curvature), so it captures structure
+/ localized to the traded tenors WITHOUT being flexible enough to explain noise (the honesty safeguard).
+.cfg.attribution:`reconcileTol`buckets`localWindow!(1e-8; 0 0.25 0.5 1 2 5f; 5);
 
 / --- cards layer: curated model cards (cards/cards.q), Research OS R5 ---
 / One structured card per KEY capability (the 4 R2-registered capabilities + the key

@@ -171,4 +171,4 @@
 \l workflow/workflow.q
 
 .qfdm.loaded:1b;
-.qfdm.version:"0.86";
+.qfdm.version:"0.87";

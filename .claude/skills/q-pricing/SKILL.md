@@ -409,6 +409,10 @@ Two related parameter-naming traps in date/commodity code (both repeatedly hit a
 
 `tests/run_all_tests.q` evaluates each test file in the SAME q process, so any GLOBAL a test sets leaks into every later test (in suite order). A test that relies on a LIBRARY default of a mutable global must RESET it at the top, or a prior group's leftovers silently flip its result (passes standalone, fails in the full suite — the worst kind). The repeat offenders: `.gov.hypoTbl`/`.gov.trialTbl` (reset via `.gov.hypoTbl:.gov.__emptyHypotheses[]` — and `.gov.register`'s upsert can `'type` on a type-incompatible leftover row, R13/R16), the cards store `modelCards` (the cards tests leave a synthetic one; restore the real store with `modelCards:.cfg.cards` so `.cards.gateReady` finds the real cards, R16), and `futures` (every commodity/replay/season test sets its own — assume nothing about it on entry). Also use UNIQUE hypoIds when registering. Rule: if a test reads a mutable global it did not itself set this run, reset it first.
 
+**27. PnL attribution (`.attribution.*`) is in RETURN units (per-`Pp`) — a DOLLAR-booked run is residual-dominated regardless of basis**
+
+R15's decomposition attributes `position·coef·shape % Pp` (it divides by the contract price), so its level/slope/curvature/carry are in RETURN units and it reconciles to a run whose `stepPnl` is `position·return` (ΔP/Pp) — as R15's own test and the R12 replay book. A run that books DOLLAR PnL (`position·ΔP`, as the R16–R20 strategy templates do) is ~`1/Pp` larger than the components, so the five components come out tiny and the residual ≈ the whole PnL — residual-dominated by the UNIT MISMATCH, not by basis or noise. So before reading a large attribution residual as "unexplained / suspect", confirm the run's PnL convention matches the attribution's (return units); the R20 "basis-mismatch" finding was partly this unit effect (R22). Distinct from the genuine basis-mismatch a local basis fixes (R22's `.attribution.pnlLocal`).
+
 ## q/kdb+ naming and namespace rules
 
 When reviewing or writing q code, enforce clear naming and namespace hygiene.

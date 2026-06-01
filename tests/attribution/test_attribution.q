@@ -71,4 +71,39 @@ chk[1f=(rk`bucketDelta)`b0; "(risk) the front position's delta is in the front t
 chk[0f<rk`rollDownExposure; "(risk) roll-down exposure is positive on a backwardated curve (long, +rollYield)"];
 chk[1f=rk`calendarSpreadExposure; "(risk) the single-leg calendar-spread exposure equals the position"];
 
+/ === (R22) LOCAL-basis attribution: distinguishes localized structure (basis-mismatch) from genuine noise ===
+/ N monthly contracts + a DIRECTIONAL localized near-curvature (a bow over ranks 0..4) where the GLOBAL bow
+/ (peaks mid-curve) is ~0 -> the global basis misses it; the local traded-tenor basis captures it. Runs are
+/ RETURN-booked (stepPnl = position * return), matching the attribution's per-Pp convention (test 1-4 above).
+flyYms:202501+til 12;
+flyMexp:{"D"$(string x div 100),".",(-2#"0",string x mod 100),".20"} each flyYms;
+flyDts:2024.06.05 2024.06.12 2024.06.19 2024.06.26 2024.07.03;
+nearBow:{[r] $[r<=4; (r*4f-r)%4f; 0f]};                      / a bow peaking at rank 2, zero at rank 0/4 and beyond
+mkFut:{[yms;mexp;dts;amp;bowfn]
+    raze {[ym;rk;e;dts;amp;bowfn] px:60f+(0.2*rk)+amp*bowfn rk;
+        flip `commodity`contractYM`expiry`firstDate`date`settle`open`high`low`volume!(
+            (count[dts]#`SYN);(count[dts]#ym);(count[dts]#e);(count[dts]#first dts);dts;px;px;px;px;count[dts]#5000)}[;;;dts;amp;bowfn]'[yms; til count yms; mexp]};
+pxOf:{[d;c] first exec settle from futures where date=d, contractYM=c};
+mkLeg:{[ym;w;dts] px:pxOf[;ym] each dts; n:count dts;
+    `meta`steps!((`commodity`strategy!(`SYN;`hand)); flip `stepDate`activeContract`position`stepPnl!(dts; n#ym; n#w; (0f,-1_n#w)*0f,(1_deltas px)%(-1_px)))};
+
+futures:mkFut[flyYms;flyMexp;flyDts;0 3 6 9 12f;nearBow];    / directional growing localized curvature
+flyRun:(`meta`legs)!((enlist[`commodity]!enlist `SYN); mkLeg[;;flyDts]'[flyYms 0 2 4; 1 -2 1f]);
+gFly:.attribution.pnl flyRun; lFly:.attribution.pnlLocal flyRun;
+chk[lFly`reconciled; "(R22) the LOCAL decomposition reconciles to the realized total"];
+chk[(lFly`residualFraction) < gFly`residualFraction; "(R22) localized curvature: LOCAL residual fraction < GLOBAL (the traded-tenor basis captures what the global basis missed)"];
+chk[0.2>lFly`residualFraction; "(R22) localized curvature: LOCAL residual is LOW (the curvature IS captured -> structure, not noise)"];
+chk[0.4<gFly`residualFraction; "(R22) localized curvature: GLOBAL residual is HIGH (the global basis cannot see the near-curve curvature) - the R20 basis-mismatch case"];
+chk[`localizedStructure=(.attribution.residualSplit flyRun)`verdict; "(R22) residualSplit classifies it as localizedStructure (basis-mismatch, not noise)"];
+
+/ THE SAFEGUARD: a genuine high-frequency NOISE move (the zigzag case r4 above - a move orthogonal to the
+/ smooth shapes) must keep a HIGH local residual too: the THREE fixed local factors do NOT span it, so the
+/ local basis RECOVERS the meaning of residual rather than destroying it (residual is NOT forced to 0). The
+/ basis is 3 fixed factors regardless of contract count - a one-factor-per-contract basis would explain this.
+futures:(mkSnap[pd;6#60f]),mkSnap[cd;60f+zig];               / restore the zigzag snapshot (test 4's curve)
+lNoise:.attribution.pnlLocal r4;
+chk[lNoise`reconciled; "(R22 safeguard) the noise LOCAL decomposition reconciles"];
+chk[0.5<lNoise`residualFraction; "(R22 safeguard) genuine high-frequency noise keeps a HIGH local residual - 3 fixed factors do NOT spuriously explain it (residual not forced to 0)"];
+chk[`genuineNoise=(.attribution.residualSplit r4)`verdict; "(R22 safeguard) residualSplit classifies the noise run as genuineNoise (the real red flag)"];
+
 -1 "test_attribution: PASS";
