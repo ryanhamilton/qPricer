@@ -101,6 +101,10 @@
 / Curve (Research OS R10: the curve engine; consumes the state/ door downward; computes the
 / rich derived curve + shocks + immutable snapshots; opens nothing at import; does NOT rewire regime/)
 \l curve/curve.q
+/ Commodity European-options pricer (Post-foundation R26: the pivot to the pricing track - prices European
+/ crude options on the R10 curve forward via the validated Black-76 closed form + an FDM cross-check; vol is
+/ model/historical NOT market-implied; composes the engine + curve/ downward; registered as a `model capability)
+\l models/commodityOption.q
 / Roll (Research OS R11: as-of-only roll discipline; depends on state/ door; independent of
 / curve/; reads downward only; opens nothing at import; does NOT rewire existing readers)
 \l roll/roll.q
@@ -174,4 +178,4 @@
 \l workflow/workflow.q
 
 .qfdm.loaded:1b;
-.qfdm.version:"0.90";
+.qfdm.version:"0.91";

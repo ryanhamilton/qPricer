@@ -1,6 +1,6 @@
 # qFDM / qPricer — Architecture & Engineering Design
 
-**Version:** 0.90 &nbsp;|&nbsp; **Tests:** 421 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Evidence-layer foundation R9–R16: COMPLETE** (R17 prior-strategy; R18 risk-premium; R19 iterative/multi-leg; R20 curvature; R21 vol-weighted carry; R22 local-basis attribution; R23 attribution units/roll fix + re-attribution; R24 directional trend + passive-long benchmark; R25 research-findings synthesis — the strategy arc concluded: **no tradeable edge in any dimension on this data**, written up in `docs/RESEARCH_FINDINGS.md`)
+**Version:** 0.91 &nbsp;|&nbsp; **Tests:** 422 / 0 green &nbsp;|&nbsp; **Loader:** `\l core/init.q` &nbsp;|&nbsp; **Strategy arc CONCLUDED** (R8 + R16–R24: no tradeable edge in any dimension on this data, written up in `docs/RESEARCH_FINDINGS.md` at R25) **· Pricing track BEGUN** (R26: European commodity options on the realistic R10 crude curve — Black-76 + an FDM cross-check, vol scoped honestly model-not-market)
 
 **What this document is.** The target-state design *and* the incremental build plan. The codebase
 migrates toward it behind the test suite — **every step keeps the full suite green and byte-identical;
@@ -776,11 +776,31 @@ Same discipline as Part I: each step is additive, keeps the suite green and byte
   numbers exactly). No code / canonical changes (`core/init.q` version only). The "no edge here, and here's
   why, and here's what would change it" conclusion is exactly what the governance spine + evidence layer exist
   to make trustworthy.
-* **← NEXT (post-foundation):** the strategy arc is concluded and **written up** (`docs/RESEARCH_FINDINGS.md`:
-  no tradeable edge in any dimension on this data, with the data-gap analysis saying what to acquire to find
-  more); the fork opens cleanly — acquire the data a deferred thesis needs (§Deferred), or pivot to the
-  **pricing-side work** the strategy search doesn't depend on, all riding on a stack that is realistic
-  end-to-end — added only when a named edge or a real need justifies them.
+* **R26 — Post-foundation: the pivot to the pricing track — European commodity options on the realistic curve. ✅ DONE (v0.91).**
+  The strategy search reached an honest end (R25: no tradeable edge in this data); R26 turns to the project's
+  STATED long-term target — commodity / power / multi-asset options — which it can finally build on the
+  realistic point-in-time curve the research OS produced. `models/commodityOption.q` (`.commodity.option.*`)
+  prices European crude options where the FORWARD is the actual point-in-time crude futures curve (R10's
+  `.curve.build`, through R9's door) at the option tenor — a CURVE-CONSISTENT WRAPPER on the VALIDATED Black-76
+  closed form (`.commodity.black76.*`), with an FDM cross-check that REUSES the validated equity FDM
+  (`.engine.priceOption`) via the transform Black-76(F,K,T,σ,r) = exp(−rT)·BS(spot=F,r=0) — so the price is
+  VERIFIED against a known answer, not asserted (real CRUDE: ATM call 2.797, FDM 2.826, agreement 0.029,
+  parity residual 0). HONEST VOL SCOPE (the R25 data-gap): the vol is a model / historical / flat input
+  labelled `volSource` — NOT market-implied (no options surface in this data; the pricer does NOT fabricate
+  one — future, data-gated work). BOUNDED: European calls/puts only (American / barriers / smile-skew
+  calibration build on this later). Registered as an R2 `model` capability (`commodityEuropeanOption`,
+  conforms; `.cards.audit[]` passes it); carded with the honest what-it-does-NOT-do failure modes. ADDITIVE —
+  the equity FDM core + the engine canonicals byte-for-byte UNCHANGED; **422/0** (+1 `commodity_pricer` group
+  test: FDM-vs-closed-form agreement on a call+put, put-call parity, the curve-sourced forward, the volSource
+  label, greek signs). It establishes the pricing-track pattern: reuse the validated engine, price on the
+  realistic curve, validate against a known answer, flag the data we don't have.
+* **← NEXT (pricing track):** the pricing track has begun (R26: European commodity options on the realistic
+  R10 curve). The natural extensions, each justified-when-needed: **American / early-exercise** commodity
+  options (the FDM already does American on the equity side); **barriers / Asian / spread** commodity options;
+  a **market implied-vol surface** (smile/skew calibration + a tradeable vol-risk premium) — the R25 data-gap,
+  gated on acquiring an options chain; and the eventual **power / electricity** and **multi-asset** options —
+  gated on the corresponding data. The deferred strategy theses (§Deferred) remain available too, each gated
+  on the data its data-gap names — added only when a named edge or a real need justifies them.
 
 **Deferred (unchanged):** the "priced-in" gate; the drift monitor; IPC services and cloud CI / scheduled
 pipeline (§6, §7); pricing extensions (commodity swaps, Asian / spread options — §9 of the external

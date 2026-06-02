@@ -6,6 +6,8 @@ A kdb+/q pricing, calibration, risk, and backtest framework. The equity finite-d
 
 > **Research findings (R25):** the post-foundation strategy search (R8 + R16–R24) is synthesised in **[docs/RESEARCH_FINDINGS.md](docs/RESEARCH_FINDINGS.md)** — a per-strategy ledger, the cross-cutting conclusion (**no cleanly tradeable edge from this data** across risk-premium / structural / directional; the only paying dimension is passive beta, which timing does not improve — R24 alpha −50.95), and a data-gap analysis naming what data each deferred strategy needs. Every figure is cross-checked against the committed evidence.
 
+> **Pricing track (R26):** with the strategy search closed, the work pivots to the project's target — commodity options. `models/commodityOption.q` (`.commodity.option.priceEuropean`) prices **European crude options on the realistic point-in-time futures curve** (R10's `.curve.build`): a curve-consistent wrapper on the validated **Black-76** closed form, **cross-checked against the equity FDM** (verified, not asserted). Vol is a model/historical input clearly labelled **not market-implied** (no options surface in this data — the pricer does not fabricate one). Demo: `apps/examples/commodity_option_pricer.q`.
+
 ## Architecture
 
 The repository is one monorepo organized into layers (dependencies flow downward only); see **[ARCHITECTURE.md](ARCHITECTURE.md)** and the per-layer `README.md`:
@@ -28,7 +30,7 @@ The repository is one monorepo organized into layers (dependencies flow downward
 | Config | `.cfg` layer (`config/base.q` + `QPRICER_ENV` overrides) |
 | Portfolio | Strategy allocator (`.alloc`): equal-weight / inverse-vol / min-variance / risk-parity / max-Sharpe / mean-variance, long-only + cap + turnover constraints, causal walk-forward OOS comparison |
 | Regime | Market-state engine (`.regime`): per-(commodity,date) curve/vol/liquidity/roll/season fingerprint + regime-conditional performance breakdown |
-| Tests | 421 passing tests (`q tests/run_all_tests.q`) |
+| Tests | 422 passing tests (`q tests/run_all_tests.q`) |
 
 ### Not Yet Supported
 

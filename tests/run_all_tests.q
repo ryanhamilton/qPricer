@@ -398,6 +398,7 @@
 .test.butterflyFiles:(enlist "tests/butterfly/test_crude_butterfly.q");
 .test.xcarryvwFiles:(enlist "tests/xcarryvw/test_xcommodity_carry_vw.q");
 .test.trendFiles:(enlist "tests/trend/test_crude_trend.q");
+.test.commodityPricerFiles:(enlist "tests/commodity_pricer/test_commodity_option.q");
 
 .test.executionFiles:(
     "tests/execution/test_exec_fill.q";
@@ -538,6 +539,7 @@
     (`butterfly;  .test.butterflyFiles);
     (`xcarryvw;   .test.xcarryvwFiles);
     (`trend;      .test.trendFiles);
+    (`commodity_pricer; .test.commodityPricerFiles);
     (`strategy;   .test.strategyFiles));
 
 / --- Runner with timing ---

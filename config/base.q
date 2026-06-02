@@ -15,6 +15,14 @@
 .cfg.fdm:`method`numberOfSpotSteps`numberOfTimeSteps`minimumSpot`maximumSpot`interpolationMethod`returnFullGrid`stabilityCheck!(
     `explicit;200;2000;0f;300f;`linear;1b;1b);
 
+/ --- commodity European-options pricer (models/commodityOption.q), Post-foundation R26 ---
+/ The FDM cross-check grid (the SAME validated explicit FDM the equity core uses) + the model discount rate.
+/ riskFreeRate = the discount rate (a MODEL assumption, not market-observed); fdmMethod/numberOfSpotSteps/
+/ numberOfTimeSteps = the FDM cross-check grid; maxSpotMult = the FDM max spot as a multiple of the forward
+/ (the grid scales with the forward level so a $60 crude option and a $3 gas option both resolve well).
+.cfg.commodityOption:`riskFreeRate`fdmMethod`numberOfSpotSteps`numberOfTimeSteps`maxSpotMult!(
+    0.04;`explicit;200;2000;6f);
+
 / --- core layer: implied-volatility solver (core/config.q) ---
 / defaultImpliedVolConfig.
 .cfg.iv:`lowerVolatilityBound`upperVolatilityBound`tolerance`maximumIterations!(
@@ -463,6 +471,16 @@
     `riskPremium;
     "crude in a persistent trending regime; trends REVERSE (whipsaw losses at turning points - the classic momentum failure); a directional book is fully exposed to a directional crash (the energyShock2022 / covid2020 down-moves); the absolute Sharpe can be cleared by simply TIMING beta (passive long crude also has a Sharpe), so absolute gates are NOT sufficient - the edge must be ALPHA OVER the passive-long benchmark; transaction / roll cost from flipping erodes a marginal trend edge";
     `energyShock2022;`;"qFDM research";2026.06.01);
+/ Post-foundation R26: the commodityEuropeanOption pricer - the first pricing-track capability (a `model kind,
+/ edge `na). Carded with the HONEST vol-scope failure modes (vol is model/historical NOT market-implied; the
+/ curve forward is assumed tradeable; American/smile out of scope) so the audit documents what it does NOT do.
+.cfg.cards:.cfg.cards upsert `cardId`capabilityKind`capabilityName`version`intendedUse`assumptions`edgeSource`regimeApplicability`riskMemoryKey`govHypoId`owner`asOf!(
+    `card_commodityEuropeanOption;`model;`commodityEuropeanOption;`v1;
+    "Price European commodity (crude) options on the REALISTIC point-in-time futures curve (R10): the forward from .curve.build (through R9's door) at the option tenor, the Black-76 closed form for the price + greeks, and an FDM cross-check (the validated equity FDM via the transform Black-76 = exp(-rT)*BS(spot=forward,r=0)) that VERIFIES the closed form against a known answer";
+    "the forward is the actual point-in-time crude curve at the option's tenor (R10/R9 - the bridge to the evidence layer); the vol is a MODEL / HISTORICAL-realised / flat input labelled `volSource - NOT market-implied (we have no options / implied-vol surface in this data); the discount rate is a MODEL assumption (.cfg.commodityOption, not market-observed); European calls/puts with a SINGLE vol (no smile/skew); reuses the validated Black-76 + equity FDM (not a parallel implementation)";
+    `na;
+    "European, single-vol only - NO market implied-vol surface, so NO smile/skew and NO vol-risk-premium calibration (the R25 data-gap - future, data-gated work; the pricer does NOT fabricate a surface); NO American / early-exercise and NO barriers/exotics (out of scope for this first European pricer); the forward ASSUMES the R10 curve is the tradeable forward (interpolated between actual contracts); the discount rate + the input vol are assumptions, not market data - so the PRICE is a model price, not a market mark";
+    `na;`;"qFDM research";2026.06.02);
 
 / --- backtest layer: per-strategy default configs (backtest/strategy.q) ---
 / Each .strategy.<name>.defaultConfig returns its dict below. Values, TYPES and
